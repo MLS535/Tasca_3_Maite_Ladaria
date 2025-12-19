@@ -1,114 +1,98 @@
-# 🐧 Clasificación de Pingüinos – Palmer Penguins
+# Tasca 3 – Palmer Penguins (Maite Ladaria)
 
-Proyecto de **Sistemas de Aprendizaje Automático** donde se implementan y despliegan distintos **modelos de clasificación supervisada** sobre el dataset *Palmer Penguins*, siguiendo como referencia el caso práctico del dataset Iris.
+En aquesta tasca del mòdul **Sistemes d’Aprenentatge Automàtic**, he implementat i desplegat diferents **models de classificació supervisada** utilitzant el dataset *Palmer Penguins*, seguint el mateix enfocament que al cas pràctic del dataset Iris.
 
-El proyecto incluye:
+El projecte cobreix tot el flux habitual d’un problema de classificació, des del preprocessament de les dades fins al desplegament d’un servei web per fer prediccions.
 
-* Preprocesamiento completo de datos
-* Entrenamiento de **4 modelos de clasificación**
-* Serialización de modelos
-* Despliegue de un **servicio web con Flask**
-* Cliente Python que consume el servicio
-* Gráficas en la parte de Images
----
+El projecte inclou:
+- Preprocessament complet de les dades
+- Entrenament de **4 models de classificació**
+- Serialització dels models
+- Desplegament d’un **servei web amb Flask**
+- Un client Python que consumeix el servei
+- Gràfiques a la carpeta `Images`
 
-## 📊 Dataset
+## Dataset
 
-Se utiliza el dataset **Palmer Penguins**, descargado desde Kaggle (`penguins_size.csv`).
+S’utilitza el dataset **Palmer Penguins**, descarregat des de Kaggle (`penguins_size.csv`).
 
-Cada individuo contiene las siguientes variables:
+Variables del dataset:
+- `species` → **variable objectiu** (Adelie, Chinstrap, Gentoo)
+- `island` → Dream, Torgersen, Biscoe
+- `culmen_length_mm`
+- `culmen_depth_mm`
+- `flipper_length_mm`
+- `body_mass_g`
+- `sex` → Male / Female
 
-* `species` → **variable objetivo** (Adelie, Chinstrap, Gentoo)
-* `island` → Dream, Torgersen, Biscoe
-* `culmen_length_mm`
-* `culmen_depth_mm`
-* `flipper_length_mm`
-* `body_mass_g`
-* `sex` → Male / Female
+Per simplificar el treball, s’eliminen les files que contenen valors `NA`.
 
-Las filas con valores `NA` se eliminan para simplificar el proceso.
+## Preprocessament de les dades
 
----
+El preprocessament és comú per a tots els models i es realitza al mòdul `notebook/data_utils.py`.
 
-## ⚙️ Preprocesamiento de datos
+Inclou els següents passos:
+- Eliminació de valors nuls
+- Divisió del dataset:
+  - **80% per a entrenament**
+  - **20% per a prova**
+- Codificació de la variable objectiu (`species`) amb `LabelEncoder`
+- Codificació *one-hot* de les variables categòriques (`island`, `sex`) amb `DictVectorizer`
+- Normalització de les variables numèriques amb `StandardScaler`
+  - mitjana = 0
+  - desviació típica = 1
+  - l’escalat s’ajusta **només amb el conjunt d’entrenament** i s’aplica a entrenament i prova
 
-El preprocesamiento es **común para todos los modelos** y se realiza en el módulo `data_utils.py`:
+Aquest procés evita *data leakage* i garanteix la coherència entre entrenament i predicció.
 
-* Eliminación de valores nulos
-* División del dataset:
+## Models implementats
 
-  * **80% entrenamiento**
-  * **20% prueba**
-* Codificación de la variable objetivo (`species`) mediante `LabelEncoder`
-* Codificación *one-hot* de variables categóricas (`island`, `sex`) con `DictVectorizer`
-* Normalización de variables numéricas con `StandardScaler`
+S’han entrenat i avaluat els següents models de classificació:
 
-  * Media = 0
-  * Desviación típica = 1
-  * Ajuste del escalado **solo con el conjunto de entrenamiento**
+1. **Regressió Logística (One-vs-Rest)**
+2. **SVM (Support Vector Machine)** amb kernel lineal
+3. **KNN (k-Nearest Neighbours)** amb distància euclidiana
+4. **Decision Tree (Arbre de decisió)**
 
-Este enfoque evita *data leakage* y garantiza coherencia entre entrenamiento y predicción.
+Per a cada model:
+- s’utilitza el mateix preprocessament
+- s’avalua el rendiment mitjançant:
+  - accuracy
+  - matriu de confusió
+  - `classification_report`
 
----
+## Serialització dels models
 
-## 🤖 Modelos implementados
+Els models entrenats es serialitzen amb la llibreria **`joblib`**, juntament amb tots els elements necessaris per poder fer prediccions correctes posteriorment:
 
-Se han entrenado y evaluado los siguientes clasificadores:
+- model entrenat
+- `LabelEncoder`
+- `DictVectorizer`
+- `StandardScaler`
+- llista de variables numèriques
 
-1. **Regresión Logística (One-vs-Rest)**
-2. **Máquinas de Soporte Vectorial (SVM)** – kernel lineal
-3. **K-Nearest Neighbours (KNN)** – distancia euclídea
-4. **Árboles de Decisión (Decision Tree)**
+Els fitxers generats són:
 
-Cada modelo:
-
-* Se entrena usando el mismo preprocesamiento
-* Se evalúa con:
-
-  * Accuracy
-  * Matriz de confusión
-  * Classification report
-
----
-
-## 💾 Serialización de modelos
-
-Los modelos entrenados se serializan utilizando **`joblib`**, junto con todos los elementos necesarios para la predicción:
-
-* Modelo entrenado
-* `LabelEncoder`
-* `DictVectorizer`
-* `StandardScaler`
-* Lista de variables numéricas
-
-Los modelos se guardan en la carpeta:
-
-```
 models/
 ├── logistic_regression.joblib
 ├── svm.joblib
 ├── knn.joblib
 └── decision_tree.joblib
-```
 
----
+## Servei web amb Flask
 
-## 🌐 Servicio web – Flask
-
-Se ha desarrollado un servicio web REST con **Flask** que carga los modelos serializados y permite realizar predicciones sobre nuevos pingüinos.
+S’ha desenvolupat un servei web REST amb **Flask** que carrega els models serialitzats i permet fer prediccions sobre nous exemplars de pingüins mitjançant peticions HTTP **POST** en format JSON.
 
 ### Endpoints disponibles
 
-Todos los endpoints aceptan peticiones **POST** con datos en formato JSON:
+| Model | Endpoint |
+|------|----------|
+| Regressió logística | `/predict/logistic_regression` |
+| SVM | `/predict/svm` |
+| KNN | `/predict/knn` |
+| Arbre de decisió | `/predict/decision_tree` |
 
-| Modelo              | Endpoint                       |
-| ------------------- | ------------------------------ |
-| Regresión logística | `/predict/logistic_regression` |
-| SVM                 | `/predict/svm`                 |
-| KNN                 | `/predict/knn`                 |
-| Árbol de decisión   | `/predict/decision_tree`       |
-
-### Ejemplo de petición JSON
+### Exemple de JSON d’entrada
 
 ```json
 {
@@ -119,28 +103,24 @@ Todos los endpoints aceptan peticiones **POST** con datos en formato JSON:
   "island": "Torgersen",
   "sex": "Male"
 }
-```
+Client Python
 
----
+El projecte inclou un client en Python que consumeix el servei Flask:
 
-## 🧑‍💻 Cliente Python
+realitza com a mínim dues peticions per cada model
 
-Se ha implementado un cliente en Python que interactúa con el servicio Flask:
+mostra les respostes per consola
 
-* Realiza **al menos dos peticiones por modelo**
-* Muestra las respuestas por consola
-* Utiliza la librería `requests`
+utilitza la llibreria requests
 
-Esto permite validar el correcto funcionamiento del servicio web y los modelos desplegados.
+Això permet validar el correcte funcionament del servei web i dels models desplegats.
 
----
-
-## 📁 Estructura del proyecto
-
-```
-Tasca 3/
+Estructura del projecte
+Tasca_3_Maite_Ladaria/
 ├── dataset/
 │   └── penguins_size.csv
+├── Images/
+│   └── *.png
 ├── models/
 │   ├── logistic_regression.joblib
 │   ├── svm.joblib
@@ -156,61 +136,55 @@ Tasca 3/
 │   └── app.py
 ├── client/
 │   └── client.py
+├── environment.yml
 └── README.md
-```
 
----
+Com executar el projecte
+1) Crear l’entorn Conda
+conda env create -f environment.yml
+conda activate Maite_Ladaria_penguin_task
 
-## ▶️ Ejecución del proyecto
+2) Entrenar i serialitzar els models
 
-### 1️⃣ Entrenar y serializar modelos
+Executa cada script dins la seva carpeta corresponent. Per exemple:
 
-Ejecutar cada script de modelo desde su carpeta correspondiente.
+cd notebook/Regresion
+python Regresion.py
 
-### 2️⃣ Arrancar el servidor Flask
 
-```bash
+Repeteix el procés per a VectorMachine, KNN i DecisionTree.
+
+3) Arrencar el servidor Flask
 cd flask_app
 python app.py
-```
 
-Servidor disponible en:
 
-```
+El servidor quedarà disponible a:
+
 http://127.0.0.1:5000
-```
 
-### 3️⃣ Ejecutar el cliente
-
-```bash
+4) Executar el client
 cd client
 python client.py
-```
 
----
+Tecnologies utilitzades
 
-## 🧪 Tecnologías utilizadas
+Python
 
-* Python
-* Pandas
-* NumPy
-* scikit-learn
-* Flask
-* joblib
-* requests
+NumPy
 
----
+Pandas
 
-## 📌 Autoría
+scikit-learn
 
-Proyecto desarrollado como parte del módulo **Sistemes d’Aprenentatge Automàtic**, utilizando el dataset Palmer Penguins como alternativa moderna al clásico Iris.
+Flask
 
----
+joblib
 
-## ✅ Estado del proyecto
+requests
 
-✔️ Preprocesamiento correcto
-✔️ 4 modelos entrenados
-✔️ Modelos serializados
-✔️ Servicio web desplegado
-✔️ Cliente funcional
+matplotlib
+
+Autoria
+
+Maite Ladaria

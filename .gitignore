@@ -1,0 +1,22 @@
+# Entornos virtuales
+venv/
+.env/
+
+# Conda
+*.conda
+__pycache__/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Datos grandes (opcional)
+dataset/*.csv
+
+# SO
+.DS_Store
+Thumbs.db

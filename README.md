@@ -103,7 +103,9 @@ S’ha desenvolupat un servei web REST amb **Flask** que carrega els models seri
   "island": "Torgersen",
   "sex": "Male"
 }
-Client Python
+```
+
+## Client Python
 
 El projecte inclou un client en Python que consumeix el servei Flask:
 
@@ -115,7 +117,7 @@ utilitza la llibreria requests
 
 Això permet validar el correcte funcionament del servei web i dels models desplegats.
 
-Estructura del projecte
+## Estructura del projecte
 Tasca_3_Maite_Ladaria/
 ├── dataset/
 │   └── penguins_size.csv
@@ -139,7 +141,7 @@ Tasca_3_Maite_Ladaria/
 ├── environment.yml
 └── README.md
 
-Com executar el projecte
+## Com executar el projecte
 1) Crear l’entorn Conda
 conda env create -f environment.yml
 conda activate Maite_Ladaria_penguin_task
